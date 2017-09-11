@@ -45,7 +45,7 @@ int main(int argc, char*argv[])
   /* Prepare a Modbus mapping with 2 holding registers
      (plus no output coil, one input coil and two input registers)
      This will also automatically set the value of each register to 0 */
-  modbus_mapping_t *mapping = modbus_mapping_new(0, 1, 2, 0);
+  modbus_mapping_t *mapping = modbus_mapping_new(1, 1, 1, 1);
   if (!mapping) {
     fprintf(stderr, "Failed to allocate the mapping: %s\n", modbus_strerror(errno));
     exit(1);
@@ -53,7 +53,7 @@ int main(int argc, char*argv[])
 
   /* Set some random values to registers */
   mapping->tab_registers[0] = 20;
-  mapping->tab_registers[1] = 30;
+  mapping->tab_bits[0] = 1;
 
   if (use_backend == TCP) {
     ctx = modbus_new_tcp("127.0.0.1", 1502);

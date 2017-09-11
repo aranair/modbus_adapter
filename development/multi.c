@@ -35,7 +35,7 @@ enum {
 
 /*   // Read estop coil */
 /*   if (modbus_read_bits(ctx, READ_ESTOP_COIL_ADDR_OFFSET, 1, coil_bit) != 1) */
-/*     fprintf(stderr, "Read register error: %s\n", modbus_strerror(errno)); */
+/*     fprintf(stderr, "Read estop coil error: %s\n", modbus_strerror(errno)); */
 /*   else */
 /*     printf("Real Estop (0x9): %d\n", coil_bit[0]); */
 /* } */
@@ -48,16 +48,16 @@ void set_coil(modbus_t *ctx, uint16_t addr_offset, bool setting)
   }
 }
 
-void set_speed(modbus_t *ctx, uint16_t addr_offset, uint16_t hertz)
+void set_speed(modbus_t *ctx, uint16_t addr_offset, uint16_t rev)
 {
-  uint16_t data[2] = { 0, hertz * 100 };
-  printf("Setting speed to %d Hz\n", hertz);
-  if (modbus_write_registers(ctx, addr_offset, 2, data) != 2) {
+  uint16_t data[1] = { rev };
+  printf("Setting speed to %d Hz\n", rev / 100);
+  if (modbus_write_registers(ctx, addr_offset, 1, data) != 1) {
     fprintf(stderr, "Failed to write register: %s\n", modbus_strerror(errno));
   }
 }
 
-uint8_t read_coil(modbus_t *ctx, uint16_t addr_offset)
+int8_t read_coil(modbus_t *ctx, uint16_t addr_offset)
 {
   uint8_t coil_bit[1];
   if (modbus_read_bits(ctx, addr_offset, 1, coil_bit) == 1) {
@@ -68,10 +68,10 @@ uint8_t read_coil(modbus_t *ctx, uint16_t addr_offset)
   }
 }
 
-uint16_t read_register(modbus_t *ctx, uint16_t addr_offset)
+int16_t read_register(modbus_t *ctx, uint16_t addr_offset)
 {
   uint16_t data[1];
-  if (modbus_read_registers(ctx, READ_FREQ_ADDR_OFFSET, 1, data) == 1) {
+  if (modbus_read_registers(ctx, addr_offset, 1, data) == 1) {
     return data[0];
   } else {
     fprintf(stderr, "Read register error: %s\n", modbus_strerror(errno));
@@ -82,22 +82,17 @@ uint16_t read_register(modbus_t *ctx, uint16_t addr_offset)
 int main(int argc, char*argv[])
 {
   modbus_t *ctx;
-  int use_backend = TCP;
+  modbus_t *tcp_ctx;
   int mIterations = 0;
 
-  if (argc > 1 && strcmp(argv[1], "rtu") == 0) use_backend = RTU;
+  tcp_ctx = modbus_new_tcp("10.0.0.164", 1502);
+  modbus_set_slave(tcp_ctx, KEP_SERVER_ID);
 
-  /* Initialize connection */
-  if (use_backend == TCP) {
-    ctx = modbus_new_tcp("10.0.0.164", 1502);
-  } else {
-    /* ctx = modbus_new_rtu("/dev/ttys029", 115200, 'N', 8, 1); */
-    ctx = modbus_new_rtu("/dev/ttyUSB1", 115200, 'N', 8, 1);
-    modbus_set_slave(ctx, PLC_SERVER_ID);
-  }
+  ctx = modbus_new_rtu("/dev/ttys020", 115200, 'N', 8, 1);
+  modbus_set_slave(ctx, PLC_SERVER_ID);
 
-  if (!ctx) {
-    fprintf(stderr, "Failed to create the context: %s\n", modbus_strerror(errno));
+  if (!ctx || !tcp_ctx) {
+    fprintf(stderr, "Failed to connect context: %s\n", modbus_strerror(errno));
     exit(1);
   }
 
@@ -107,46 +102,34 @@ int main(int argc, char*argv[])
     exit(1);
   }
 
-  /* modbus_set_debug(ctx, TRUE); */
-  /* test_methods(ctx); */
+  if (modbus_connect(tcp_ctx) == -1) {
+    fprintf(stderr, "Connection failed to tcp_ctx: %s\n", modbus_strerror(errno));
+    modbus_free(tcp_ctx);
+    exit(1);
+  }
 
-  for (;;) {
-    uint16_t real_freq = read_register(ctx, READ_FREQ_ADDR_OFFSET);
-    uint8_t estop_coil = read_coil(ctx, READ_ESTOP_COIL_ADDR_OFFSET);
+  set_speed(ctx, WRITE_FREQ_ADDR_OFFSET, 15 * 100);
+  printf("Done\n");
 
-    /* Write coil value to Kepware */
-    /* relay_coil(tcp_ctx, KEP_SERVER_ID); */
+  set_coil(ctx, WRITE_ESTOP_COIL_ADDR_OFFSET, true);
+  printf("Done\n");
 
-    /* Write registers value to Kepware */
-    /* relay_register(tcp_ctx, KEP_SERVER_ID); */
+  /* sleep(2); */
+  /* set_speed(ctx, WRITE_FREQ_ADDR_OFFSET, 0); */
+  /* set_coil(ctx, WRITE_ESTOP_COIL_ADDR_OFFSET, false); */
 
-    /* Rotate speed */
-    switch (mIterations % 5) {
-      case 1:
-        set_speed(ctx, WRITE_FREQ_ADDR_OFFSET, 15);
-        set_coil(ctx, WRITE_ESTOP_COIL_ADDR_OFFSET, true);
-        break;
+  int16_t real_freq = read_register(ctx, 0);
+  printf("real_freq: %i\n", real_freq);
 
-      case 2:
-        set_speed(ctx, WRITE_FREQ_ADDR_OFFSET, 25);
-        break;
+  int8_t estop_coil = read_coil(ctx, 0);
+  printf("coil: %i\n", estop_coil);
 
-      case 3:
-        set_speed(ctx, WRITE_FREQ_ADDR_OFFSET, 10);
-        break;
+  /* Relay values to Kepware via TCP */
+  set_coil(tcp_ctx, WRITE_ESTOP_COIL_ADDR_OFFSET, estop_coil);
+  printf("Done\n");
+  set_speed(tcp_ctx, WRITE_FREQ_ADDR_OFFSET, real_freq);
+  printf("Done\n");
 
-      case 4:
-        set_coil(ctx, WRITE_ESTOP_COIL_ADDR_OFFSET, false);
-        set_speed(ctx, WRITE_FREQ_ADDR_OFFSET, 0);
-        break;
-
-      default:
-        break;
-    }
-
-    mIterations++;
-    sleep(1);
-  } // end for
 
   printf("Exit the loop.\n");
   modbus_close(ctx);
