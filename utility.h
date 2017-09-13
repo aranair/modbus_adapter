@@ -1,4 +1,5 @@
 #include <modbus.h>
+#include <time.h>
 
 /* void test_methods(modbus_t *ctx) */
 /* { */
@@ -59,3 +60,24 @@ int16_t read_register(modbus_t *ctx, uint16_t addr_offset)
   }
 }
 
+// This is for the windows nanosleep!
+#ifdef WIN32
+#include <windows.h>
+#elif _POSIX_C_SOURCE >= 199309L
+#include <time.h>   // for nanosleep
+#else
+#include <unistd.h> // for usleep
+#endif
+void sleep_ms(int milliseconds) // cross-platform sleep function
+{
+#ifdef WIN32
+    Sleep(milliseconds);
+#elif _POSIX_C_SOURCE >= 199309L
+    struct timespec ts;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000000;
+    nanosleep(&ts, NULL);
+#else
+    usleep(milliseconds * 1000);
+#endif
+}

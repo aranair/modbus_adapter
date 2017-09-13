@@ -122,8 +122,8 @@ struct ModbusConfig * parse_config_devices()
   for(int i = 0; i < count; i++)
   {
     config_setting_t *device = config_setting_get_elem(setting, i);
-    /* Parse attributes of a device */
 
+    /* Parse attributes of a device */
     config_setting_lookup_int(device, "address", &device_arr[i].address);
     config_setting_lookup_string(device, "name", &name);
     config_setting_lookup_int(device, "connection", &connection);
@@ -149,9 +149,9 @@ struct ModbusConfig * parse_config_devices()
       config_setting_lookup_int(wd, "size", &device_arr[i].data_arr[d].size);
       config_setting_lookup_int(wd, "address", &device_arr[i].data_arr[d].address);
 
-      if (strncmp(type, "coil", 10) == 0) {
+      if (strcmp(type, "coil") == 0) {
         device_arr[i].data_arr[d].type = COIL;
-      } else if (strncmp(type, "register", 10) == 0) {
+      } else if (strcmp(type, "register") == 0) {
         device_arr[i].data_arr[d].type = REG;
       }
     }
