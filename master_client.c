@@ -76,7 +76,7 @@ int main(int argc, char*argv[])
   int8_t estop_coil;
 
   for (;;) {
-    switch (mIterations) {
+    switch (mIterations % 10) {
       case 2:
         set_speed(plc_ctx, write_freq_addr, 15);
         set_coil(plc_ctx, write_coil_addr, true);
@@ -95,17 +95,12 @@ int main(int argc, char*argv[])
         set_speed(plc_ctx, write_freq_addr, 0);
         break;
 
-      case 10:
-        mIterations = 0;
-        break;
-
       default:
         break;
     }
 
     real_freq = read_register(plc_ctx, 0);
     /* printf("\nreal_freq: %i\n", real_freq); */
-
     estop_coil = read_coil(plc_ctx, 0);
     /* printf("coil: %i\n\n", estop_coil); */
 
