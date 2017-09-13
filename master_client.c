@@ -70,8 +70,8 @@ int main(int argc, char*argv[])
   int read_coil_addr  = find_data(plc, "read_estop")->address;
 
   /* modbus_set_debug(ctx, TRUE); */
-  /* test_methods(ctx); */
 
+  uint16_t data[1];
   for (;;) {
     /* Rotate speed */
     switch (mIterations % 3500) {
