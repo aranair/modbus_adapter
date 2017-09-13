@@ -20,24 +20,6 @@ void initialize_connection(modbus_t *ctx) {
   }
 }
 
-struct ModbusDevice * find_device(struct ModbusConfig *config, char *name) {
-  for (int i = 0; i < config->device_count; i++) {
-    if (strcmp(config->devices[i].name, name) == 0) {
-      return &config->devices[i];
-    }
-  }
-  return NULL;
-}
-
-struct ModbusData * find_data(struct ModbusDevice *device, char *name) {
-  for (int i = 0; i < device->data_count; i++) {
-    if (strcmp(device->data_arr[i].name, name) == 0) {
-      return &device->data_arr[i];
-    }
-  }
-  return NULL;
-}
-
 int main(int argc, char*argv[])
 {
   struct ModbusConfig *config = parse_config_devices();
@@ -46,8 +28,8 @@ int main(int argc, char*argv[])
 
   int mIterations = 0;
 
-  struct ModbusDevice *plc = find_device(config, "hitachiwj200");
-  struct ModbusDevice *kep = find_device(config, "kepware");
+  struct ModbusDevice *plc = get_device(config, "hitachiwj200");
+  struct ModbusDevice *kep = get_device(config, "kepware");
 
   modbus_t *plc_ctx;
   modbus_t *kep_ctx;
@@ -71,10 +53,10 @@ int main(int argc, char*argv[])
   initialize_connection(plc_ctx);
   initialize_connection(kep_ctx);
 
-  int write_freq_addr = find_data(plc, "write_freq")->address;
-  int write_coil_addr = find_data(plc, "write_coil")->address;
-  int read_freq_addr  = find_data(plc, "read_freq")->address;
-  int read_coil_addr  = find_data(plc, "read_estop")->address;
+  int write_freq_addr = get_data(plc, "write_freq")->address;
+  int write_coil_addr = get_data(plc, "write_coil")->address;
+  int read_freq_addr  = get_data(plc, "read_freq")->address;
+  int read_coil_addr  = get_data(plc, "read_estop")->address;
 
   set_speed(plc_ctx, write_freq_addr, 15);
   set_coil(plc_ctx, write_coil_addr, true);
@@ -92,12 +74,12 @@ int main(int argc, char*argv[])
 
   /* Relay values to Kepware via TCP */
   if (real_freq != -1) {
-    set_coil(kep_ctx, find_data(kep, "write_coil")->address, estop_coil);
+    set_coil(kep_ctx, get_data(kep, "write_coil")->address, estop_coil);
   }
 
   if (estop_coil != -1) {
     // real_freq is in absolute value not in hertz
-    set_speed(kep_ctx, find_data(kep, "write_freq")->address, real_freq/100);
+    set_speed(kep_ctx, get_data(kep, "write_freq")->address, real_freq/100);
   }
 
   modbus_close(plc_ctx);

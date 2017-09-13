@@ -60,6 +60,26 @@ int16_t read_register(modbus_t *ctx, uint16_t addr_offset)
   }
 }
 
+/* Returns a pointer to the device that matches the name in the config. */
+struct ModbusDevice * get_device(struct ModbusConfig *config, char *name) {
+  for (int i = 0; i < config->device_count; i++) {
+    if (strcmp(config->devices[i].name, name) == 0) {
+      return &config->devices[i];
+    }
+  }
+  return NULL;
+}
+
+/* Returns a pointer to the data object that matches the name, scoped to device */
+struct ModbusData * get_data(struct ModbusDevice *device, char *name) {
+  for (int i = 0; i < device->data_count; i++) {
+    if (strcmp(device->data_arr[i].name, name) == 0) {
+      return &device->data_arr[i];
+    }
+  }
+  return NULL;
+}
+
 // This is for the windows nanosleep!
 #ifdef WIN32
 #include <windows.h>
