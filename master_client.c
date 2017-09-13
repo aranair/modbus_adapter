@@ -9,8 +9,8 @@
 #include <stdbool.h>
 #include <libconfig.h>
 
-#include "utility.h"
 #include "config.h"
+#include "utility.h"
 
 void initialize_connection(modbus_t *ctx) {
   if (modbus_connect(ctx) == -1) {
@@ -54,8 +54,10 @@ int main(int argc, char*argv[])
 
   /* modbus_set_debug(ctx, TRUE); */
 
-  int16_t real_freq;
-  int8_t estop_coil;
+  uint16_t real_freq;
+  uint8_t estop_coil;
+
+  int success;
 
   for (;;) {
     switch (mIterations % 10) {
@@ -81,14 +83,19 @@ int main(int argc, char*argv[])
         break;
     }
 
-    real_freq = read_register(plc_ctx, 0);
-    /* printf("\nreal_freq: %i\n", real_freq); */
-    estop_coil = read_coil(plc_ctx, 0);
-    /* printf("coil: %i\n\n", estop_coil); */
-
     /* Relay values to Kepware via TCP */
-    set_coil(kep_ctx, get_data(kep, "write_coil")->address, estop_coil);
-    set_speed(kep_ctx, get_data(kep, "write_freq")->address, real_freq);
+    success = read_register(plc_ctx, 0, &real_freq);
+    if (success == 1) {
+      set_speed(kep_ctx, get_data(kep, "write_freq")->address, real_freq);
+      /* printf("\nreal_freq: %i\n", real_freq); */
+    }
+
+    success = read_coil(plc_ctx, 0, &estop_coil);
+    if (success == 1) {
+      set_coil(kep_ctx, get_data(kep, "write_coil")->address, estop_coil);
+      /* printf("coil: %i\n\n", estop_coil); */
+    }
+
 
     mIterations++;
     sleep_ms(500);
@@ -100,4 +107,7 @@ int main(int argc, char*argv[])
 
   modbus_close(kep_ctx);
   modbus_free(kep_ctx);
+
+  free(config);
+  free(devices);
 }

@@ -38,22 +38,24 @@ void set_speed(modbus_t *ctx, uint16_t addr_offset, uint16_t hertz)
   }
 }
 
-int8_t read_coil(modbus_t *ctx, uint16_t addr_offset)
+int read_coil(modbus_t *ctx, uint16_t addr_offset, uint8_t *ret)
 {
   uint8_t coil_bit[1];
   if (modbus_read_bits(ctx, addr_offset, 1, coil_bit) == 1) {
-    return coil_bit[0];
+    *ret = coil_bit[0];
+    return 1;
   } else {
     fprintf(stderr, "Read coil bit error: %s\n", modbus_strerror(errno));
     return -1;
   }
 }
 
-int16_t read_register(modbus_t *ctx, uint16_t addr_offset)
+int read_register(modbus_t *ctx, uint16_t addr_offset, uint16_t *ret)
 {
   uint16_t data[1];
   if (modbus_read_registers(ctx, addr_offset, 1, data) == 1) {
-    return data[0];
+    *ret = data[0];
+    return 1;
   } else {
     fprintf(stderr, "Read register error: %s\n", modbus_strerror(errno));
     return -1;
@@ -61,7 +63,7 @@ int16_t read_register(modbus_t *ctx, uint16_t addr_offset)
 }
 
 /* Returns a pointer to the device that matches the name in the config. */
-struct ModbusDevice * get_device(struct ModbusConfig *config, char *name) {
+struct ModbusDevice *get_device(struct ModbusConfig *config, char *name) {
   for (int i = 0; i < config->device_count; i++) {
     if (strcmp(config->devices[i].name, name) == 0) {
       return &config->devices[i];

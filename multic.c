@@ -64,27 +64,31 @@ int main(int argc, char*argv[])
   /* set_speed(plc_ctx, WRITE_FREQ_ADDR_OFFSET, 0); */
   /* set_coil(plc_ctx, WRITE_ESTOP_COIL_ADDR_OFFSET, false); */
 
-  /* int16_t real_freq = read_register(plc_ctx, read_freq_addr); */
-  int16_t real_freq = read_register(plc_ctx, 0);
-  printf("\nreal_freq: %i\n", real_freq);
-
-  /* int8_t estop_coil = read_coil(plc_ctx, read_coil_addr); */
-  int8_t estop_coil = read_coil(plc_ctx, 0);
-  printf("coil: %i\n\n", estop_coil);
+  uint16_t real_freq;
+  uint8_t estop_coil;
+  int success;
 
   /* Relay values to Kepware via TCP */
-  if (real_freq != -1) {
-    set_coil(kep_ctx, get_data(kep, "write_coil")->address, estop_coil);
+  /* int16_t real_freq = read_register(plc_ctx, read_freq_addr); */
+  success = read_register(plc_ctx, 0, &real_freq);
+  if (success == 1) {
+    set_speed(kep_ctx, get_data(kep, "write_freq")->address, real_freq);
+    /* printf("\nreal_freq: %i\n", real_freq); */
   }
 
-  if (estop_coil != -1) {
+  /* int8_t estop_coil = read_coil(plc_ctx, read_coil_addr); */
+  success = read_coil(plc_ctx, 0, &estop_coil);
+  if (success == 1) {
     // real_freq is in absolute value not in hertz
-    set_speed(kep_ctx, get_data(kep, "write_freq")->address, real_freq/100);
+    set_coil(kep_ctx, get_data(kep, "write_coil")->address, estop_coil);
   }
 
   modbus_close(plc_ctx);
   modbus_free(plc_ctx);
 
-  modbus_free(kep_ctx);
   modbus_close(kep_ctx);
+  modbus_free(kep_ctx);
+
+  free(config);
+  free(devices);
 }
