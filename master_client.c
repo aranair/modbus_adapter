@@ -116,14 +116,15 @@ int main(int argc, char*argv[])
       continue;
     }
 
-    /* Write coil value to Kepware */
-    /* set_coil(tcp_ctx, WRITE_ESTOP_COIL_ADDR_OFFSET, true); */
-
-    /* Write registers value to Kepware */
-    /* set_speed(tcp_ctx, WRITE_FREQ_ADDR_OFFSET, real_freq / 100); */
+    /* Relay values to Kepware via TCP */
+    /* set_coil(kep_ctx, find_data(kep, "write_coil")->address, estop_coil); */
+    /* set_speed(kep_ctx, find_data(kep, "write_freq")->address, real_freq); */
   }
 
   printf("Exit the loop.\n");
   modbus_close(plc_ctx);
   modbus_free(plc_ctx);
+
+  modbus_close(kep_ctx);
+  modbus_free(kep_ctx);
 }
