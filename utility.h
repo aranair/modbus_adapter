@@ -27,13 +27,19 @@ void set_coil(modbus_t *ctx, uint16_t addr_offset, bool setting)
   }
 }
 
+void set_kep_req_speed(modbus_t *ctx, uint16_t addr_offset, uint16_t hertz)
+{
+	uint16_t data[1] = { hertz };
+	if (modbus_write_registers(ctx, addr_offset, 1, data) != 1) {
+		fprintf(stderr, "Failed to write register: %s\n", modbus_strerror(errno));
+	}
+}
+
 void set_speed(modbus_t *ctx, uint16_t addr_offset, uint16_t hertz)
 {
-  /* uint16_t data[2] = { 0, hertz * 100 }; */
-  uint16_t data[1] = { hertz * 100 };
+  uint16_t data[2] = { 0, hertz * 100 };
   printf("Setting speed to %d Hz\n", hertz);
-  /* if (modbus_write_registers(ctx, addr_offset, 2, data) != 2) { */
-  if (modbus_write_registers(ctx, addr_offset, 1, data) != 1) {
+  if (modbus_write_registers(ctx, addr_offset, 2, data) != 2) {
     fprintf(stderr, "Failed to write register: %s\n", modbus_strerror(errno));
   }
 }

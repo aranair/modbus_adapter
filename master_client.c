@@ -44,6 +44,7 @@ int main(int argc, char*argv[])
 
   modbus_set_slave(plc_ctx, plc->address);
   modbus_set_slave(kep_ctx, kep->address);
+
   initialize_connection(plc_ctx);
   initialize_connection(kep_ctx);
 
@@ -51,6 +52,8 @@ int main(int argc, char*argv[])
   int write_coil_addr = get_data(plc, "write_coil")->address;
   int read_freq_addr  = get_data(plc, "read_freq")->address;
   int read_coil_addr  = get_data(plc, "read_estop")->address;
+
+  int kep_req_freq = get_data(kep, "req_freq")->address;
 
   /* modbus_set_debug(ctx, TRUE); */
 
@@ -60,23 +63,27 @@ int main(int argc, char*argv[])
   int success;
 
   for (;;) {
-    switch (mIterations % 10) {
-      case 2:
+    switch (mIterations % 400) {
+      case 0:
         set_speed(plc_ctx, write_freq_addr, 15);
         set_coil(plc_ctx, write_coil_addr, true);
+		set_kep_req_speed(kep_ctx, kep_req_freq, 15);
         break;
 
-      case 4:
+      case 100:
         set_speed(plc_ctx, write_freq_addr, 25);
+		set_kep_req_speed(kep_ctx, kep_req_freq, 25);
         break;
 
-      case 6:
+      case 200:
         set_speed(plc_ctx, write_freq_addr, 10);
+		set_kep_req_speed(kep_ctx, kep_req_freq, 10);
         break;
 
-      case 8:
+      case 300:
         set_coil(plc_ctx, write_coil_addr, false);
         set_speed(plc_ctx, write_freq_addr, 0);
+		set_kep_req_speed(kep_ctx, kep_req_freq, 0);
         break;
 
       default:
@@ -84,21 +91,28 @@ int main(int argc, char*argv[])
     }
 
     /* Relay values to Kepware via TCP */
-    success = read_register(plc_ctx, 0, &real_freq);
+    success = read_register(plc_ctx, read_freq_addr, &real_freq);
     if (success == 1) {
-      set_speed(kep_ctx, get_data(kep, "write_freq")->address, real_freq);
-      /* printf("\nreal_freq: %i\n", real_freq); */
-    }
+		set_kep_req_speed(kep_ctx, get_data(kep, "write_freq")->address, real_freq / 100);
+	}
+	else {
+		set_kep_req_speed(kep_ctx, get_data(kep, "write_freq")->address, 0);
+	}
 
-    success = read_coil(plc_ctx, 0, &estop_coil);
+	success = read_coil(plc_ctx, read_coil_addr, &estop_coil);
     if (success == 1) {
-      set_coil(kep_ctx, get_data(kep, "write_coil")->address, estop_coil);
-      /* printf("coil: %i\n\n", estop_coil); */
-    }
-
+		if (modbus_write_bit(kep_ctx, get_data(kep, "write_coil")->address, estop_coil ? 0 : 1) != 1) {
+			fprintf(stderr, "Failed to write to coil: %s\n", modbus_strerror(errno));
+		}
+	}
+	else {
+		if (modbus_write_bit(kep_ctx, get_data(kep, "write_coil")->address, 0) != 1) {
+			fprintf(stderr, "Failed to write to coil: %s\n", modbus_strerror(errno));
+		}
+	}
 
     mIterations++;
-    sleep_ms(500);
+    sleep_ms(1);
   }
 
   printf("Exit the loop.\n");
