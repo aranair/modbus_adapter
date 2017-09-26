@@ -1,24 +1,6 @@
 #include <modbus.h>
 #include <time.h>
 
-/* void test_methods(modbus_t *ctx) */
-/* { */
-/*   uint16_t data[1]; */
-/*   uint8_t  coil_bit[1]; */
-
-/*   // Read register- real frequency 0x1001 */
-/*   if (modbus_read_registers(ctx, READ_FREQ_ADDR_OFFSET, 1, data) != 1) */
-/*     fprintf(stderr, "Read real freq register error: %s\n", modbus_strerror(errno)); */
-/*   else */
-/*     printf("Real Frequency (0x1001): %d\n", data[0]); */
-
-/*   // Read estop coil */
-/*   if (modbus_read_bits(ctx, READ_ESTOP_COIL_ADDR_OFFSET, 1, coil_bit) != 1) */
-/*     fprintf(stderr, "Read register error: %s\n", modbus_strerror(errno)); */
-/*   else */
-/*     printf("Real Estop (0x9): %d\n", coil_bit[0]); */
-/* } */
-
 void set_coil(modbus_t *ctx, uint16_t addr_offset, bool setting)
 {
   printf("Setting coil to %d\n", setting);
