@@ -20,9 +20,9 @@ enum {
 
 void set_inverter_speed(modbus_t *ctx, uint16_t addr_offset, uint16_t hertz)
 {
-  uint16_t data[2] = { 0, hertz * 100 };
-  int res = modbus_write_registers(ctx, addr_offset, 2, data);
-  if (res != 2) {
+  uint16_t data[1] = { hertz * 100 };
+  int res = modbus_write_registers(ctx, addr_offset, 1, data);
+  if (res != 1) {
     fprintf(stderr, "Failed to write register: %s\n", modbus_strerror(errno));
   }
 }
@@ -97,7 +97,6 @@ int main(int argc, char*argv[])
 
     res = modbus_read_registers(ctx, FREQ_ADDR_OFFSET, 2, data);
     print_register_results(res, 2, data);
-
 
     sleep(3);
   } /* end for */
