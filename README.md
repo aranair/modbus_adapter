@@ -9,7 +9,7 @@ What is this?
 
 ## Re-defining Connections
 
-- libconfig[1] is used to define the modbus connections
+- [libconfig][1] is used to define the modbus connections
 - Can be easily changed to work with whatever device you need to connect to either via Modbus RTU or Modbus TCP/IP.
 
 ## Sample config.cfg
