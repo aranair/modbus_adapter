@@ -10,8 +10,10 @@ What is this?
 
 ## Re-defining Connections
 
-- [libconfig][1] is used to define the modbus connections
-- Can be easily changed to work with whatever device you need to connect to either via Modbus RTU or Modbus TCP/IP.
+- [libconfig][1] is used to parse the config file; I use this file to define
+  - the modbus connections &
+  - the addresses of the registers / coils in the modbus setup
+- Can be easily changed to work with whatever device and data addresses, either via Modbus RTU or Modbus TCP/IP.
 
 ## Sample config.cfg
 
