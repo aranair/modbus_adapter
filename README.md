@@ -3,8 +3,9 @@ What is this?
 
 - Demo program written in plain C that:
   - Speaks the modbus protocol using [libmodbus][2]
-  - Reads information from a PLC via an inverter over modbus RTU
-  - Relays information to a Kepware Server via Modbus TCP/IP
+  - Reads information like spinning speed and status from a Spindle via an inverter over modbus RTU
+  - Updates the spindle speed in a loop
+  - Relays these information to a Kepware Server via Modbus TCP/IP (or any connection configured)
 - Tested on OSX Sierra 10.12.6 and Windows 10
 
 ## Re-defining Connections
