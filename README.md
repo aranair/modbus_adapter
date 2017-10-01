@@ -8,6 +8,11 @@ What is this?
   - Relays these information to a Kepware Server via Modbus TCP/IP (or any connection configured)
 - Tested on OSX Sierra 10.12.6 and Windows 10
 
+## Simplified Demo
+
+There is a simplier version that lives inside the `simplified` branch if you do not want to have libconfig as a
+dependency. But the configs and addresses for connections / registers are all hard coded.
+
 ## Re-defining Connections
 
 - [libconfig][1] is used to parse the config file; I use this file to define
